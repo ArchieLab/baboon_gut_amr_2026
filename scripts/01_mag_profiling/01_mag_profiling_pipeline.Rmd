@@ -1,0 +1,86 @@
+---
+title: "Pipeline 01: MAG Taxonomy Profiling & Master Metrics Consolidation"
+author: "Mary Chege"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+options(stringsAsFactors = FALSE)
+
+
+# Load consolidated suite of core data manipulation and Excel packages
+library(tidyverse)
+library(readxl)
+library(writexl)
+library(janitor)
+
+# Setup paths relative to scripts/01_mag_profiling/ for team portability
+DATA_DIR   <- "../../data"
+OUTPUT_DIR <- "../../results/tables"
+
+# Ensure output directory exists
+dir.create(OUTPUT_DIR, showWarnings = FALSE, recursive = TRUE)
+
+# File inputs
+METRICS_INPUT_PATH <- file.path(DATA_DIR, "Supplementary_Table 2.xlsx")
+GTDB_INPUT_PATH    <- file.path(DATA_DIR, "Book3-classification.xlsx")
+
+# File outputs
+CSV_OUTPUT_PATH   <- file.path(OUTPUT_DIR, "Supplementary_Table_2_Updated.csv")
+EXCEL_OUTPUT_PATH <- file.path(OUTPUT_DIR, "Supplementary_Table_2_Updated.xlsx")
+# Load the master metrics sheet, skipping the title row
+if (!file.exists(METRICS_INPUT_PATH)) {
+  stop(paste("Could not find master metrics sheet at:", METRICS_INPUT_PATH))
+}
+metrics_df <- read_excel(METRICS_INPUT_PATH, skip = 1)
+
+# Load the GTDB-Tk classification sheet
+if (!file.exists(GTDB_INPUT_PATH)) {
+  stop(paste("Could not find GTDB-Tk classification sheet at:", GTDB_INPUT_PATH))
+}
+gtdb_df <- read_excel(GTDB_INPUT_PATH)
+
+# Force the first column of both tables to be named "genome" for seamless merging
+colnames(metrics_df)[1] <- "genome"
+colnames(gtdb_df)[1]    <- "genome"
+
+# Standardize classification column by position (Column 2)
+colnames(gtdb_df)[2]    <- "classification"
+
+# Step A: Perform Left Join with Taxonomy Classification
+merged_df <- metrics_df %>%
+  left_join(gtdb_df, by = "genome")
+
+# Step B: Impute Functional Counts (Replacing NAs with 0)
+# Ensures downstream analysis handles samples with 0 ARGs or Virulence Factors gracefully
+processed_df <- merged_df %>%
+  mutate(
+    No_of_ARGs = replace_na(No_of_ARGs, 0),
+    No_of_Virulence_factors = replace_na(No_of_Virulence_factors, 0)
+  )
+
+# Step C: Simplify Genome/Bin ID Strings
+# Strip complex contextual prefixes to keep genome identifiers clean and legible
+final_supp_table <- processed_df %>%
+  mutate(genome = genome %>%
+    str_remove_all("(?i)^(SocPer_Social_|SeasPer_Seasonal_|SocCo_)")
+  )
+
+# Targeted sanity check for the deep multi-drug resistant outlier (Viyela bin.11)
+print("--- Verifying Outlier MAG Presence & Metrics ---")
+verification_check <- final_supp_table %>% 
+  filter(str_detect(genome, "EA-b002-VIY-55519-23-May-2014_bin.11"))
+
+print(verification_check)
+
+# Save as CSV for flat-file workflows
+write_csv(final_supp_table, CSV_OUTPUT_PATH)
+print(paste("Flat-file summary successfully saved to:", CSV_OUTPUT_PATH))
+
+# Save as Excel Spreadsheet for supplementary material integration
+write_xlsx(final_supp_table, EXCEL_OUTPUT_PATH)
+print(paste("Excel publication table successfully saved to:", EXCEL_OUTPUT_PATH))
+
+
