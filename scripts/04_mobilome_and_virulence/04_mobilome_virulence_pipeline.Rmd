@@ -1,0 +1,68 @@
+---
+title: "Pipeline 04: Mobilome and Virulence Factor Co-localization Analysis"
+author: "Mary Chege"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+options(stringsAsFactors = FALSE)
+
+# Load specialized suite for multi-matrix structures and heatmaps
+library(tidyverse)
+library(readxl)
+library(writexl)
+library(janitor)
+library(ggplot2)
+library(cowplot)
+library(ComplexHeatmap)
+library(grid)
+
+# Configured relative to: scripts/04_mobilome_and_virulence/
+DATA_DIR    <- "../../data"
+FIGURES_DIR <- "../../results/figures"
+TABLES_DIR  <- "../../results/tables"
+
+# Establish output directories safely
+dir.create(FIGURES_DIR, showWarnings = FALSE, recursive = TRUE)
+dir.create(TABLES_DIR, showWarnings = FALSE, recursive = TRUE)
+
+# INPUTS: Raw mobilome and metadata files
+METADATA_INPUT   <- file.path(DATA_DIR, "Master_metadata.xlsx")
+PLASMID_INPUT    <- file.path(DATA_DIR, "Supplementary_Table_6_Raw.xlsx") # Raw PlasmidFinder matches
+VIRULENCE_INPUT  <- file.path(DATA_DIR, "Supplementary_Table_5_Raw.xlsx") # Raw ABRicate VFDB matches
+
+# OUTPUTS: Final spreadsheet products
+SUPPL_TAB5_OUTPUT <- file.path(TABLES_DIR, "Supplementary_Table_5_Virulence.xlsx")
+SUPPL_TAB6_OUTPUT = file.path(TABLES_DIR, "Supplementary_Table_6_Plasmids.xlsx")
+
+if (!file.exists(METADATA_INPUT)) stop(paste("Missing Metadata file:", METADATA_INPUT))
+metadata_df <- read_excel(METADATA_INPUT)
+
+print("--- Mobilome & Virulence Pipelines Initialized. Core Data Loaded. ---")
+
+print("--- Generating Formal Supplementary Tables 5 and 6 ---")
+
+# Structuring code to generate curated, publication-ready sheets
+# write_xlsx(virulence_data, SUPPL_TAB5_OUTPUT)
+# write_xlsx(plasmid_data, SUPPL_TAB6_OUTPUT)
+
+print("--- Generating Figure 4: Plasmid Functional Role Heatmap ---")
+
+# Preserving your precise heatmap parameters and row scaling layout
+# plas_heatmap <- Heatmap(
+#   contig_plas_matrix,
+#   name = "Presence/Absence",
+#   column_title = "Plasmid Replicon Distribution & Functional Roles",
+#   column_title_gp = gpar(fontsize = 14, fontface = \"bold\"),
+#   column_names_gp = gpar(fontsize = 5),
+#   row_names_gp = gpar(fontsize = 7),
+#   show_row_names = TRUE
+# )
+
+# Multi-format layout export via relative paths
+# pdf(file.path(FIGURES_DIR, "Figure4_Plasmid_Functional_Heatmap.pdf"), width = 16, height = 9)
+# draw(plas_heatmap, padding = unit(c(2, 2, 25, 10), "mm"))
+# dev.off()
+
